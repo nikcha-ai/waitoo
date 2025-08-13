@@ -8,15 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-    <!-- React and ReactDOM from CDN -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX transformation -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Firebase CDN scripts - This is the corrected version -->
+    <!-- Firebase CDN scripts - The most reliable way to load them -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
     <style>
         .font-poppins { font-family: 'Poppins', sans-serif; }
         .font-playfair { font-family: 'Playfair Display', serif; }
@@ -31,70 +27,111 @@
 </head>
 <body class="bg-gray-100 font-poppins">
 
-    <div id="root"></div>
+    <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl shadow-lg rounded-2xl bg-white/90 backdrop-blur-sm">
+            <div class="p-6">
+                <h2 class="text-3xl font-playfair text-center text-purple-600 mb-4">Signup for waitoo</h2>
+            </div>
+            <div class="p-6 space-y-6">
+                <!-- User ID will be displayed here -->
+                <div id="userIdDisplay" class="hidden bg-blue-100 text-blue-800 p-3 rounded-lg text-sm text-center">
+                    Your User ID: <span id="userIdValue" class="font-mono break-all"></span>
+                </div>
+                
+                <form id="signupForm" class="space-y-4">
+                    <div>
+                        <label for="name" class="text-lg font-medium text-gray-700 block mb-1">Name</label>
+                        <input type="text" id="name" class="w-full border border-gray-300 rounded-lg p-3 text-base focus:border-purple-500 focus:ring-1 focus:ring-purple-500" required>
+                    </div>
+                    <div>
+                        <label for="email" class="text-lg font-medium text-gray-700 block mb-1">Email</label>
+                        <input type="email" id="email" class="w-full border border-gray-300 rounded-lg p-3 text-base focus:border-purple-500 focus:ring-1 focus:ring-purple-500" required>
+                    </div>
+                    <button type="submit" id="submitButton" class="w-full bg-purple-600 text-white py-3 text-lg font-semibold rounded-full shadow-lg hover:bg-purple-700 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Sign Up
+                    </button>
+                </form>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                <!-- Message display area -->
+                <div id="messageDisplay" class="hidden p-4 rounded-lg border">
+                    <p id="messageText" class="text-center"></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Use the older but more robust compat syntax
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = app.auth();
-        const db = app.firestore();
-        
-        const App = () => {
-            const [userId, setUserId] = useState(null);
-            const [isAuthReady, setIsAuthReady] = useState(false);
-            const [name, setName] = useState('');
-            const [email, setEmail] = useState('');
-            const [loading, setLoading] = useState(false);
-            const [message, setMessage] = useState('');
+    <script>
+        // Use an IIFE to keep the script self-contained
+        (async function() {
+            // Initialize Firebase with the global config
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            const app = firebase.initializeApp(firebaseConfig);
+            const auth = app.auth();
+            const db = app.firestore();
+            
+            const signupForm = document.getElementById('signupForm');
+            const submitButton = document.getElementById('submitButton');
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const userIdDisplay = document.getElementById('userIdDisplay');
+            const userIdValue = document.getElementById('userIdValue');
+            const messageDisplay = document.getElementById('messageDisplay');
+            const messageText = document.getElementById('messageText');
 
-            // Firebase Authentication
-            useEffect(() => {
+            let userId = null;
+
+            // Function to show a message to the user
+            function showMessage(text, isSuccess = false) {
+                messageText.textContent = text;
+                messageDisplay.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'border-green-200', 'bg-red-100', 'text-red-700', 'border-red-200');
+                if (isSuccess) {
+                    messageDisplay.classList.add('bg-green-100', 'text-green-700', 'border-green-200');
+                } else {
+                    messageDisplay.classList.add('bg-red-100', 'text-red-700', 'border-red-200');
+                }
+            }
+
+            // Authentication logic
+            try {
                 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                const authenticate = async () => {
-                    try {
-                        if (initialAuthToken) {
-                            await auth.signInWithCustomToken(initialAuthToken);
-                        } else {
-                            await auth.signInAnonymously();
-                        }
-                    } catch (error) {
-                        console.error("Authentication Error:", error);
-                    }
-                };
-                authenticate();
-                
-                const unsubscribe = auth.onAuthStateChanged((user) => {
-                    if (user) {
-                        setUserId(user.uid);
-                    } else {
-                        setUserId(null);
-                    }
-                    setIsAuthReady(true);
-                });
+                if (initialAuthToken) {
+                    await auth.signInWithCustomToken(initialAuthToken);
+                } else {
+                    await auth.signInAnonymously();
+                }
+            } catch (error) {
+                console.error("Authentication Error:", error);
+                showMessage("Authentication failed. Please try again.");
+            }
 
-                return () => unsubscribe();
-            }, []);
-        
-            const handleSignup = async (e) => {
+            // Wait for auth state change to get the user ID
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    userId = user.uid;
+                    userIdValue.textContent = userId;
+                    userIdDisplay.classList.remove('hidden');
+                    submitButton.disabled = false;
+                } else {
+                    userId = null;
+                    submitButton.disabled = true;
+                }
+            });
+
+            // Form submission handler
+            signupForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                setMessage('');
-                setLoading(true);
-        
-                if (!name || !email) {
-                    setMessage('Please fill in all fields.');
-                    setLoading(false);
-                    return;
-                }
+                submitButton.disabled = true;
+                messageDisplay.classList.add('hidden');
                 
-                if (!isAuthReady || !db || !userId) {
-                    setMessage('Authentication not ready. Please try again in a moment.');
-                    setLoading(false);
+                const name = nameInput.value;
+                const email = emailInput.value;
+
+                if (!userId) {
+                    showMessage('Authentication not ready. Please try again.');
+                    submitButton.disabled = false;
                     return;
                 }
-        
+
                 try {
                     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                     const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
@@ -104,76 +141,18 @@
                         email,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-        
-                    setMessage('Signup successful! Thank you.');
-                    setName('');
-                    setEmail('');
+
+                    showMessage('Signup successful! Thank you.', true);
+                    nameInput.value = '';
+                    emailInput.value = '';
                 } catch (error) {
                     console.error("Error adding document:", error);
-                    setMessage('An error occurred. Please try again.');
+                    showMessage('An error occurred. Please try again.');
                 } finally {
-                    setLoading(false);
+                    submitButton.disabled = false;
                 }
-            };
-        
-            return (
-                <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-poppins">
-                    <div className="w-full max-w-2xl shadow-lg rounded-2xl bg-white/90 backdrop-blur-sm">
-                        <div className="p-6">
-                            <h2 className="text-3xl font-playfair text-center text-purple-600 mb-4">Signup for waitoo</h2>
-                        </div>
-                        <div className="p-6 space-y-6">
-                            {userId && (
-                                <div className="bg-blue-100 text-blue-800 p-3 rounded-lg text-sm text-center">
-                                    Your User ID: <span className="font-mono break-all">{userId}</span>
-                                </div>
-                            )}
-                            <form onSubmit={handleSignup} className="space-y-4">
-                                <div>
-                                    <label htmlFor="name" className="text-lg font-medium text-gray-700 block mb-1">Name</label>
-                                    <input
-                                        type="text"
-                                        id="name"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg p-3 text-base focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="email" className="text-lg font-medium text-gray-700 block mb-1">Email</label>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg p-3 text-base focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={loading || !isAuthReady}
-                                    className="w-full bg-purple-600 text-white py-3 text-lg font-semibold rounded-full shadow-lg hover:bg-purple-700 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? (
-                                        <span className="flex items-center justify-center space-x-2">
-                                            <div className="w-5 h-5 rounded-full border-2 border-t-2 border-white animate-spin"></div>
-                                            <span>Submitting...</span>
-                                        </span>
-                                    ) : "Sign Up"}
-                                </button>
-                            </form>
-                            {message && (
-                                <div className={`p-4 rounded-lg border ${message.includes('successful') ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
-                                    <p className="text-center">{message}</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+            });
+        })();
     </script>
 </body>
 </html>
