@@ -156,18 +156,16 @@
         (async function() {
             
             // -------------------------------------------------------------------------------------------------------
-            // !!! THIS IS THE EXACT FIREBASE CONFIGURATION COPIED FROM YOUR SCREENSHOT !!!
-            // Please ensure this is correct if the error persists.
+            // !!! PASTE YOUR NEW, FRESH FIREBASE CONFIGURATION OBJECT HERE !!!
             // -------------------------------------------------------------------------------------------------------
             const firebaseConfig = {
-                apiKey: "AIzaSyOAEs_4WYEDi530_zPngKWycHU0hq1mPC0",
+                apiKey: "AIzaSyAOes_4WYEDI53O_zPngKwycHU0hq1mPC0",
                 authDomain: "waitoo-8b3e6.firebaseapp.com",
                 projectId: "waitoo-8b3e6",
                 storageBucket: "waitoo-8b3e6.firebasestorage.app",
                 messagingSenderId: "570627927950",
-                appId: "1:570627927950:web:932ae992c302d758b6fedf"
-            };
-
+                appId: "1:570627927950:web:25e6d9526e6ae86bb6fedf"
+              };   
             const signupForm = document.getElementById('signupForm');
             const submitButton = document.getElementById('submitButton');
             const nameInput = document.getElementById('name');
@@ -275,20 +273,24 @@
             }
 
             async function initializeAppAndAuth() {
-                console.log("Attempting to initialize Firebase...");
+                // Check for the placeholder config.
+                if (firebaseConfig.apiKey.includes("PASTE_YOUR_NEW_API_KEY_HERE")) {
+                    showMessage("CRITICAL ERROR: Please replace the placeholder Firebase config with a new one from your project settings.", false);
+                    dashboardLoading.classList.add('hidden');
+                    submitButton.disabled = true;
+                    return;
+                }
                 try {
                     app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
-                    console.log("Firebase initialized successfully. Attempting anonymous sign-in...");
+
+                    // We will just sign in anonymously for this app
                     await signInAnonymously(auth);
-                    console.log("Anonymous sign-in successful.");
                 } catch (error) {
                     console.error("Full Initialization/Authentication Error:", error);
                     let errorMessage = "An unknown error occurred.";
-                    if (error.code === 'auth/api-key-not-valid' || error.code === 'auth/invalid-api-key') {
-                        errorMessage = "Error: The Firebase API key is not valid for this project. This is a project configuration issue, not a code bug. Please check your Firebase Console under Project Settings -> General, and ensure the API key matches exactly.";
-                    } else if (error.code) {
+                    if (error.code) {
                         errorMessage = `Firebase Error: ${error.code.replace(/-/g, ' ')}.`;
                     } else if (error.message) {
                         errorMessage = `An initialization error occurred: ${error.message}`;
