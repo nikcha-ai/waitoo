@@ -119,7 +119,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
         
         async function createCustomConfirm(message) {
@@ -163,13 +163,13 @@
             // If you don't, the app will not work.
             // -----------------------------------------------------------
             const firebaseConfig = {
-              apiKey: "AIzaSyAOes_4WYEDI53O_zPngKwycHU0hq1mPC0",
-              authDomain: "waitoo-8b3e6.firebaseapp.com",
-              projectId: "waitoo-8b3e6",
-              storageBucket: "waitoo-8b3e6.firebasestorage.app",
-              messagingSenderId: "570627927950",
-              appId: "1:570627927950:web:932ae992c302d758b6fedf"
-            };
+  apiKey: "AIzaSyAOes_4WYEDI53O_zPngKwycHU0hq1mPC0",
+  authDomain: "waitoo-8b3e6.firebaseapp.com",
+  projectId: "waitoo-8b3e6",
+  storageBucket: "waitoo-8b3e6.firebasestorage.app",
+  messagingSenderId: "570627927950",
+  appId: "1:570627927950:web:932ae992c302d758b6fedf"
+};
 
             const signupForm = document.getElementById('signupForm');
             const submitButton = document.getElementById('submitButton');
@@ -220,8 +220,7 @@
                 dashboardLoading.classList.remove('hidden');
                 signupsContainer.classList.add('hidden');
 
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
+                const collectionPath = `/users/${userId}/signups`;
                 
                 const q = collection(db, collectionPath);
                 onSnapshot(q, (querySnapshot) => {
@@ -269,8 +268,7 @@
                 }
                 
                 try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                    const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
+                    const collectionPath = `/users/${userId}/signups`;
                     await deleteDoc(doc(db, collectionPath, docId));
                     showMessage('Signup deleted successfully!', true);
                 } catch (error) {
@@ -281,26 +279,12 @@
 
             async function initializeAppAndAuth() {
                 try {
-                    // Use a hardcoded object instead of a potentially undefined environment variable
-                    const firebaseConfig = {
-                        apiKey: "AIzaSyOAEs_4WYEDi530_zPngKWycHU0hq1mPCB",
-                        authDomain: "waitoo-8b3e6.firebaseapp.com",
-                        projectId: "waitoo-8b3e6",
-                        storageBucket: "waitoo-8b3e6.appspot.com",
-                        messagingSenderId: "570627927950",
-                        appId: "1:570627927950:web:932ae992c382d75886fedf"
-                    };
-
                     app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
 
-                    // Sign in with the provided token or anonymously
-                    if (typeof __initial_auth_token !== 'undefined') {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    // We will just sign in anonymously for this app
+                    await signInAnonymously(auth);
                 } catch (error) {
                     console.error("Full Initialization/Authentication Error:", error);
                     let errorMessage = "An unknown error occurred.";
@@ -346,8 +330,7 @@
                 }
 
                 try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                    const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
+                    const collectionPath = `/users/${userId}/signups`;
                     
                     await addDoc(collection(db, collectionPath), {
                         name,
@@ -355,7 +338,7 @@
                         createdAt: new Date()
                     });
 
-                    showMessage('Signup successful! Thank you.', true);
+                    showMessage('Signup successful! Thank you!', true);
                     nameInput.value = '';
                     emailInput.value = '';
                 } catch (error) {
