@@ -88,6 +88,8 @@
             <div class="p-6">
                 <h2 class="text-3xl font-playfair text-center text-purple-600 mb-4">Dashboard</h2>
                 
+                <button id="refreshButton" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-600 transition-colors duration-300 mb-4">Refresh Dashboard</button>
+
                 <!-- Loading spinner for dashboard -->
                 <div id="dashboardLoading" class="flex justify-center items-center py-8">
                     <div class="w-8 h-8 rounded-full border-4 border-t-4 border-purple-200 border-t-purple-600 animate-spin"></div>
@@ -134,9 +136,9 @@
             const signupsContainer = document.getElementById('signupsContainer');
             const signupsTableBody = document.getElementById('signupsTableBody');
             const dashboardLoading = document.getElementById('dashboardLoading');
+            const refreshButton = document.getElementById('refreshButton');
 
             let userId = null;
-            let unsubscribeFromSignups = null;
 
             // Function to show a message to the user
             function showMessage(text, isSuccess = false) {
@@ -162,48 +164,45 @@
                     submitButton.innerHTML = `Sign Up`;
                 }
             }
-
-            // Function to listen for real-time signups
-            function listenForSignups() {
+            
+            // Function to fetch signups once
+            async function fetchSignups() {
                 if (!userId) {
                     console.error("User ID is not available for fetching data.");
                     return;
                 }
                 
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
+                dashboardLoading.classList.remove('hidden');
+                signupsContainer.classList.add('hidden');
                 
-                // Unsubscribe from previous listener if it exists
-                if (unsubscribeFromSignups) {
-                    unsubscribeFromSignups();
-                }
+                try {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    const collectionRef = db.collection(`/artifacts/${appId}/users/${userId}/signups`);
+                    const querySnapshot = await collectionRef.get();
 
-                unsubscribeFromSignups = db.collection(collectionPath).onSnapshot(snapshot => {
-                    dashboardLoading.classList.add('hidden');
-                    signupsContainer.classList.remove('hidden');
                     signupsTableBody.innerHTML = '';
                     
-                    if (snapshot.empty) {
+                    if (querySnapshot.empty) {
                         signupsTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-gray-500">No signups yet.</td></tr>`;
-                        return;
+                    } else {
+                        querySnapshot.forEach(doc => {
+                            const data = doc.data();
+                            const row = document.createElement('tr');
+                            row.classList.add('bg-gray-50', 'hover:bg-gray-100');
+                            row.innerHTML = `
+                                <td class="p-3 text-sm text-gray-700 sm:table-cell" data-label="Name">${data.name}</td>
+                                <td class="p-3 text-sm text-gray-700 sm:table-cell" data-label="Email">${data.email}</td>
+                            `;
+                            signupsTableBody.appendChild(row);
+                        });
                     }
-
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const row = document.createElement('tr');
-                        row.classList.add('bg-gray-50', 'hover:bg-gray-100');
-                        row.innerHTML = `
-                            <td class="p-3 text-sm text-gray-700 sm:table-cell" data-label="Name">${data.name}</td>
-                            <td class="p-3 text-sm text-gray-700 sm:table-cell" data-label="Email">${data.email}</td>
-                        `;
-                        signupsTableBody.appendChild(row);
-                    });
-                }, error => {
+                } catch (error) {
                     console.error("Error fetching signups:", error);
+                    signupsTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-red-500">Error loading signups.</td></tr>`;
+                } finally {
                     dashboardLoading.classList.add('hidden');
                     signupsContainer.classList.remove('hidden');
-                    signupsTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-red-500">Error loading signups.</td></tr>`;
-                });
+                }
             }
 
 
@@ -227,7 +226,7 @@
                     userIdValue.textContent = userId;
                     userIdDisplay.classList.remove('hidden');
                     submitButton.disabled = false;
-                    listenForSignups(); // Start listening for data once authenticated
+                    fetchSignups(); // Fetch data once authenticated
                 } else {
                     userId = null;
                     submitButton.disabled = true;
@@ -262,6 +261,9 @@
                     showMessage('Signup successful! Thank you.', true);
                     nameInput.value = '';
                     emailInput.value = '';
+
+                    // Manually refresh dashboard after successful submission
+                    fetchSignups();
                 } catch (error) {
                     console.error("Error adding document:", error);
                     showMessage('An error occurred. Please try again.');
@@ -269,6 +271,9 @@
                     setLoading(false);
                 }
             });
+            
+            // Add event listener for the refresh button
+            refreshButton.addEventListener('click', fetchSignups);
         })();
     </script>
 </body>
