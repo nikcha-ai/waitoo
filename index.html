@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>waitoo - Discover a new you</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for a playful yet clean look -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for social media icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        /* Custom styles for the animated multi-color gradient */
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animated-gradient {
+            background: linear-gradient(-45deg, #f0f9ff, #fdf2f8, #f0fdf4, #fffbeb);
+            background-size: 400% 400%;
+            animation: gradient-animation 25s ease infinite;
+        }
+
+        /* Custom glow effect on hover */
+        .card-glow {
+            transition: all 0.3s ease;
+        }
+        .card-glow:hover {
+            box-shadow: 0 0 20px #8b5cf6, 0 0 30px #ec4899, 0 0 40px #f9a8d4;
+            transform: translateY(-5px) scale(1.02);
+        }
+        /* Custom font families */
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+
+        /* Ensuring the page takes up the full height of the viewport */
+        html, body {
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="animated-gradient font-poppins text-gray-800 flex flex-col">
+
+    <!-- Main container for layout -->
+    <div class="container mx-auto px-4 py-8 max-w-6xl flex-grow">
+
+        <!-- Header Section -->
+        <header class="flex justify-between items-center py-4 px-6 mb-8 bg-white/70 backdrop-blur-sm rounded-full shadow-lg">
+            <h1 class="text-3xl font-bold font-playfair text-purple-600">waitoo</h1>
+            <nav>
+                <ul class="flex space-x-6 text-lg font-poppins">
+                    <li><a href="#" class="text-gray-600 hover:text-purple-600 transition-colors duration-300">Home</a></li>
+                    <li><a href="#" class="text-gray-600 hover:text-purple-600 transition-colors duration-300">About</a></li>
+                    <li><a href="#" class="text-gray-600 hover:text-purple-600 transition-colors duration-300">Contact</a></li>
+                    <!-- Login Link Added -->
+                    <li><a href="#" class="text-gray-600 hover:text-purple-600 transition-colors duration-300">Login</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <!-- Hero Section -->
+        <main>
+            <section class="text-center mb-16">
+                <div class="bg-purple-100/70 rounded-3xl p-8 md:p-12 shadow-2xl backdrop-blur-sm">
+                    <h2 class="text-4xl md:text-6xl font-bold mb-4 font-playfair leading-tight text-purple-800">
+                        Discover a new you with our AI simulation. Share your story.
+                    </h2>
+                    <p class="text-lg md:text-xl text-gray-600 font-poppins max-w-3xl mx-auto mb-8">
+                        You share your story we will give you a new wings with AI to fly high in your life.
+                    </p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-4">
+                        <button class="px-8 py-4 bg-purple-600 text-white text-lg font-semibold rounded-full shadow-xl hover:bg-purple-700 transition-colors duration-300">
+                            Try Demo
+                        </button>
+                        <button class="px-8 py-4 bg-pink-500 text-white text-lg font-semibold rounded-full shadow-xl hover:bg-pink-600 transition-colors duration-300">
+                            Signup
+                        </button>
+                    </div>
+                    <!-- Placeholder image for the main section -->
+                    <img src="https://placehold.co/1200x500/fecdd3/ec4899?text=Happy+Couple" alt="Placeholder for your main image" class="w-full h-auto mt-12 rounded-2xl shadow-xl border-4 border-white/50 object-cover">
+                </div>
+            </section>
+
+            <!-- Large Cards Section - Single, New Couple, Married Couple -->
+            <section class="mb-16">
+                <h3 class="text-4xl font-bold font-playfair text-center mb-8 text-purple-800">Your Journey, Your Path</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Single Card with a descriptive placeholder image -->
+                    <div id="single-card" class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-xl card-glow cursor-pointer" onclick="showPage('single')">
+                        <img src="https://placehold.co/800x600/60a5fa/ffffff?text=Image+for+Single+Card" alt="A single person enjoying life" class="w-full h-64 object-cover rounded-lg mb-4">
+                        <h4 class="text-2xl font-bold text-center text-blue-500 font-playfair">Single</h4>
+                        <p class="text-center mt-2 text-gray-600">Discover self-love and your true potential.</p>
+                    </div>
+                    <!-- New Couple Card with a descriptive placeholder image -->
+                    <div id="new-couple-card" class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-xl card-glow cursor-pointer" onclick="showPage('new-couple')">
+                        <img src="https://placehold.co/800x600/fecdd3/ec4899?text=Image+for+New+Couple+Card" alt="A new couple holding hands" class="w-full h-64 object-cover rounded-lg mb-4">
+                        <h4 class="text-2xl font-bold text-center text-pink-500 font-playfair">New Couple</h4>
+                        <p class="text-center mt-2 text-gray-600">Navigate the early stages of a new relationship.</p>
+                    </div>
+                    <!-- Married Couple Card with a descriptive placeholder image -->
+                    <div id="married-card" class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-xl card-glow cursor-pointer" onclick="showPage('married')">
+                        <img src="https://placehold.co/800x600/8b5cf6/ffffff?text=Image+for+Married+Card" alt="A happily married couple" class="w-full h-64 object-cover rounded-lg mb-4">
+                        <h4 class="text-2xl font-bold text-center text-purple-500 font-playfair">Married Couple</h4>
+                        <p class="text-center mt-2 text-gray-600">Strengthen your bond and find harmony.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Small Cards Section -->
+            <section class="mb-16">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Lovematch Card -->
+                    <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-xl card-glow cursor-pointer text-center">
+                        <h4 class="text-xl font-bold text-red-500">Lovematch</h4>
+                    </div>
+                    <!-- Compatibility Card -->
+                    <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-xl card-glow cursor-pointer text-center">
+                        <h4 class="text-xl font-bold text-teal-500">Check Your Compatibility</h4>
+                    </div>
+                    <!-- Hook Me Card -->
+                    <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-xl card-glow cursor-pointer text-center">
+                        <h4 class="text-xl font-bold text-yellow-500">Hook Me</h4>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Testimonials Section -->
+            <section class="mb-16">
+                <h3 class="text-4xl font-bold font-playfair text-center mb-8 text-purple-800">What Our Happy Clients Say</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-xl border-l-4 border-pink-500">
+                        <p class="font-poppins italic text-gray-700">"Waitoo helped me understand myself better after my divorce. I feel like I have a fresh start. Highly recommend!"</p>
+                        <p class="mt-4 font-bold text-gray-800">- Jane D.</p>
+                    </div>
+                    <div class="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-xl border-l-4 border-blue-500">
+                        <p class="font-poppins italic text-gray-700">"We used the compatibility feature and it was so much fun! It gave us great insights into our relationship."</p>
+                        <p class="mt-4 font-bold text-gray-800">- Mark and Sarah</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="text-center mt-16 py-8 text-gray-600 font-poppins bg-white/70 backdrop-blur-sm">
+        <!-- Social Media Icons -->
+        <div class="flex justify-center space-x-6 mb-4 text-2xl">
+            <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors duration-300"><i class="fab fa-facebook"></i></a>
+            <a href="#" class="text-gray-600 hover:text-pink-500 transition-colors duration-300"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="text-gray-600 hover:text-blue-400 transition-colors duration-300"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="text-gray-600 hover:text-red-600 transition-colors duration-300"><i class="fab fa-youtube"></i></a>
+        </div>
+        <!-- Copyright Text -->
+        <p>&copy; 2025 waitoo. All rights reserved.</p>
+    </footer>
+
+    <!-- JavaScript to handle the simulated page change -->
+    <script>
+        function showPage(pageId) {
+            // In a real app, this would be a full page navigation or component swap.
+            // For this mockup, we'll just show a custom alert message.
+            alert('Navigating to the ' + pageId.replace('-', ' ') + ' page. This is a simulated link.');
+        }
+    </script>
+</body>
+</html>
+initial commit with waitoo mockup
