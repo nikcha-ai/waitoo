@@ -8,10 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Firebase CDN scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     
     <style>
         .font-poppins { font-family: 'Poppins', sans-serif; }
@@ -116,7 +112,11 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
         // Use an IIFE to keep the script self-contained
         (async function() {
             
@@ -125,18 +125,14 @@
             // REPLACE THIS ENTIRE OBJECT with the one you copied from the Firebase console.
             // -----------------------------------------------------------
             const firebaseConfig = {
-              apiKey: "AIzaSyOAEs_4WYEDi530_zPngKWycHU0hq1mPCB",
-              authDomain: "waitoo-8b3e6.firebaseapp.com",
-              projectId: "waitoo-8b3e6",
-              storageBucket: "waitoo-8b3e6.appspot.com",
-              messagingSenderId: "570627927950",
-              appId: "1:570627927950:web:932ae992c382d75886fedf"
+                apiKey: "AIzaSyOAEs_4WYEDi530_zPngKWycHU0hq1mPCB",
+                authDomain: "waitoo-8b3e6.firebaseapp.com",
+                projectId: "waitoo-8b3e6",
+                storageBucket: "waitoo-8b3e6.appspot.com",
+                messagingSenderId: "570627927950",
+                appId: "1:570627927950:web:932ae992c382d75886fedf"
             };
 
-            const app = firebase.initializeApp(firebaseConfig);
-            const auth = app.auth();
-            const db = app.firestore();
-            
             const signupForm = document.getElementById('signupForm');
             const submitButton = document.getElementById('submitButton');
             const nameInput = document.getElementById('name');
@@ -149,7 +145,8 @@
             const signupsTableBody = document.getElementById('signupsTableBody');
             const dashboardLoading = document.getElementById('dashboardLoading');
             const refreshButton = document.getElementById('refreshButton');
-
+            
+            let app, auth, db;
             let userId = null;
 
             // Function to show a message to the user
@@ -177,21 +174,21 @@
                 }
             }
             
-            // Function to fetch signups once
-            async function fetchSignups() {
+            // Function to set up a real-time listener for signups
+            function setupSignupListener() {
                 if (!userId) {
-                    console.error("User ID is not available for fetching data.");
+                    console.error("User ID is not available for setting up listener.");
                     return;
                 }
                 
                 dashboardLoading.classList.remove('hidden');
                 signupsContainer.classList.add('hidden');
-                
-                try {
-                    const appId = firebaseConfig.appId;
-                    const collectionRef = db.collection(`/artifacts/${appId}/users/${userId}/signups`);
-                    const querySnapshot = await collectionRef.get();
 
+                const appId = firebaseConfig.appId;
+                const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
+                
+                const q = collection(db, collectionPath);
+                onSnapshot(q, (querySnapshot) => {
                     signupsTableBody.innerHTML = '';
                     
                     if (querySnapshot.empty) {
@@ -208,37 +205,62 @@
                             signupsTableBody.appendChild(row);
                         });
                     }
-                } catch (error) {
-                    console.error("Error fetching signups:", error);
-                    signupsTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-red-500">Error loading signups.</td></tr>`;
-                } finally {
                     dashboardLoading.classList.add('hidden');
                     signupsContainer.classList.remove('hidden');
-                }
+                }, (error) => {
+                    console.error("Error fetching signups:", error);
+                    signupsTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-red-500">Error loading signups.</td></tr>`;
+                    dashboardLoading.classList.add('hidden');
+                    signupsContainer.classList.remove('hidden');
+                });
             }
 
-
-            // Authentication logic
-            try {
-                await auth.signInAnonymously();
-            } catch (error) {
-                console.error("Authentication Error:", error);
-                showMessage("Authentication failed. Please try again.");
-            }
-
-            // Wait for auth state change to get the user ID
-            auth.onAuthStateChanged((user) => {
-                if (user) {
-                    userId = user.uid;
-                    userIdValue.textContent = userId;
-                    userIdDisplay.classList.remove('hidden');
-                    submitButton.disabled = false;
-                    fetchSignups(); // Fetch data once authenticated
-                } else {
-                    userId = null;
+            // Initialization and authentication logic
+            async function initializeAppAndAuth() {
+                try {
+                    // Check if a valid API key exists
+                    if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('AIzaSy') === false) {
+                        throw new Error('Please replace the placeholder Firebase config with your actual config from the Firebase console.');
+                    }
+                    
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    
+                    await signInAnonymously(auth);
+                } catch (error) {
+                    // Handle specific errors and show a user-friendly message
+                    console.error("Initialization or Authentication Error:", error);
+                    let errorMessage = "An unknown error occurred. Please check your browser's console for details.";
+                    if (error.code && error.code === 'auth/api-key-not-valid') {
+                        errorMessage = "Error: Your Firebase API key is not valid. Please ensure the 'apiKey' in your code is correct and copied exactly from your Firebase project settings.";
+                    } else if (error.message.includes('placeholder')) {
+                        errorMessage = error.message;
+                    }
+                    showMessage(errorMessage);
+                    // Hide loading spinner and disable button on failure
+                    dashboardLoading.classList.add('hidden');
                     submitButton.disabled = true;
+                    return;
                 }
-            });
+
+                // Wait for auth state change to get the user ID and set up listener
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdValue.textContent = userId;
+                        userIdDisplay.classList.remove('hidden');
+                        submitButton.disabled = false;
+                        setupSignupListener(); // Set up real-time listener
+                    } else {
+                        userId = null;
+                        submitButton.disabled = true;
+                    }
+                });
+            }
+
+            // Start the initialization process
+            initializeAppAndAuth();
 
             // Form submission handler
             signupForm.addEventListener('submit', async (e) => {
@@ -259,18 +281,15 @@
                     const appId = firebaseConfig.appId;
                     const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
                     
-                    await db.collection(collectionPath).add({
+                    await addDoc(collection(db, collectionPath), {
                         name,
                         email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        createdAt: new Date()
                     });
 
                     showMessage('Signup successful! Thank you.', true);
                     nameInput.value = '';
                     emailInput.value = '';
-
-                    // Manually refresh dashboard after successful submission
-                    fetchSignups();
                 } catch (error) {
                     console.error("Error adding document:", error);
                     showMessage('An error occurred. Please try again.');
@@ -279,8 +298,9 @@
                 }
             });
             
-            // Add event listener for the refresh button
-            refreshButton.addEventListener('click', fetchSignups);
+            // The refresh button is now redundant because of the real-time listener,
+            // but we can keep it as a fallback.
+            refreshButton.addEventListener('click', setupSignupListener);
         })();
     </script>
 </body>
