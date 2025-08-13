@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Firebase CDN scripts - The most reliable way to load them -->
+    <!-- Firebase CDN scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -82,6 +82,10 @@
 
             // Function to show a message to the user
             function showMessage(text, isSuccess = false) {
+                if (!text) {
+                    messageDisplay.classList.add('hidden');
+                    return;
+                }
                 messageText.textContent = text;
                 messageDisplay.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'border-green-200', 'bg-red-100', 'text-red-700', 'border-red-200');
                 if (isSuccess) {
@@ -90,6 +94,17 @@
                     messageDisplay.classList.add('bg-red-100', 'text-red-700', 'border-red-200');
                 }
             }
+            
+            function setLoading(isLoading) {
+                if (isLoading) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = `<span class="flex items-center justify-center space-x-2"><div class="w-5 h-5 rounded-full border-2 border-t-2 border-white animate-spin"></div><span>Submitting...</span></span>`;
+                } else {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = `Sign Up`;
+                }
+            }
+
 
             // Authentication logic
             try {
@@ -120,15 +135,15 @@
             // Form submission handler
             signupForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                submitButton.disabled = true;
-                messageDisplay.classList.add('hidden');
+                setLoading(true);
+                showMessage(''); // Clear previous messages
                 
                 const name = nameInput.value;
                 const email = emailInput.value;
 
                 if (!userId) {
                     showMessage('Authentication not ready. Please try again.');
-                    submitButton.disabled = false;
+                    setLoading(false);
                     return;
                 }
 
@@ -149,7 +164,7 @@
                     console.error("Error adding document:", error);
                     showMessage('An error occurred. Please try again.');
                 } finally {
-                    submitButton.disabled = false;
+                    setLoading(false);
                 }
             });
         })();
