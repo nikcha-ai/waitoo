@@ -119,8 +119,20 @@
     <script>
         // Use an IIFE to keep the script self-contained
         (async function() {
-            // Initialize Firebase with the global config
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            
+            // -----------------------------------------------------------
+            // YOUR FIREBASE CONFIG GOES HERE
+            // REPLACE THIS ENTIRE OBJECT with the one you copied from the Firebase console.
+            // -----------------------------------------------------------
+            const firebaseConfig = {
+              apiKey: "AIzaSy...",
+              authDomain: "waitoo-...",
+              projectId: "waitoo-...",
+              storageBucket: "waitoo-...",
+              messagingSenderId: "...",
+              appId: "..."
+            };
+
             const app = firebase.initializeApp(firebaseConfig);
             const auth = app.auth();
             const db = app.firestore();
@@ -176,7 +188,7 @@
                 signupsContainer.classList.add('hidden');
                 
                 try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    const appId = firebaseConfig.appId;
                     const collectionRef = db.collection(`/artifacts/${appId}/users/${userId}/signups`);
                     const querySnapshot = await collectionRef.get();
 
@@ -208,12 +220,7 @@
 
             // Authentication logic
             try {
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                if (initialAuthToken) {
-                    await auth.signInWithCustomToken(initialAuthToken);
-                } else {
-                    await auth.signInAnonymously();
-                }
+                await auth.signInAnonymously();
             } catch (error) {
                 console.error("Authentication Error:", error);
                 showMessage("Authentication failed. Please try again.");
@@ -249,7 +256,7 @@
                 }
 
                 try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    const appId = firebaseConfig.appId;
                     const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
                     
                     await db.collection(collectionPath).add({
