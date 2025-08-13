@@ -119,7 +119,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
         
         async function createCustomConfirm(message) {
@@ -281,7 +281,16 @@
 
             async function initializeAppAndAuth() {
                 try {
-                    const firebaseConfig = JSON.parse(__firebase_config);
+                    // Use a hardcoded object instead of a potentially undefined environment variable
+                    const firebaseConfig = {
+                        apiKey: "AIzaSyOAEs_4WYEDi530_zPngKWycHU0hq1mPCB",
+                        authDomain: "waitoo-8b3e6.firebaseapp.com",
+                        projectId: "waitoo-8b3e6",
+                        storageBucket: "waitoo-8b3e6.appspot.com",
+                        messagingSenderId: "570627927950",
+                        appId: "1:570627927950:web:932ae992c382d75886fedf"
+                    };
+
                     app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
