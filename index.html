@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>waitoo - Discover a new you</title>
+    <title>waitoo - Admin Dashboard</title>
     <!-- Tailwind CSS from CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
@@ -23,12 +23,36 @@
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        /* Style for the table on mobile */
+        @media (max-width: 640px) {
+            .signup-table th, .signup-table td {
+                padding: 8px;
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .signup-table td {
+                text-align: right;
+                position: relative;
+                padding-left: 50%;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            .signup-table td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                width: calc(50% - 20px);
+                padding-right: 10px;
+                white-space: nowrap;
+                font-weight: 600;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-poppins">
 
-    <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div class="w-full max-w-2xl shadow-lg rounded-2xl bg-white/90 backdrop-blur-sm">
+    <div class="min-h-screen bg-gray-100 flex flex-col items-center justify-start p-4">
+        <div class="w-full max-w-2xl shadow-lg rounded-2xl bg-white/90 backdrop-blur-sm mt-8">
             <div class="p-6">
                 <h2 class="text-3xl font-playfair text-center text-purple-600 mb-4">Signup for waitoo</h2>
             </div>
@@ -58,6 +82,36 @@
                 </div>
             </div>
         </div>
+
+        <!-- Dashboard Section -->
+        <div class="w-full max-w-2xl shadow-lg rounded-2xl bg-white/90 backdrop-blur-sm mt-8">
+            <div class="p-6">
+                <h2 class="text-3xl font-playfair text-center text-purple-600 mb-4">Dashboard</h2>
+                
+                <!-- Loading spinner for dashboard -->
+                <div id="dashboardLoading" class="flex justify-center items-center py-8">
+                    <div class="w-8 h-8 rounded-full border-4 border-t-4 border-purple-200 border-t-purple-600 animate-spin"></div>
+                    <p class="ml-4 text-purple-600">Loading signups...</p>
+                </div>
+
+                <!-- Dashboard Table/List -->
+                <div id="signupsContainer" class="hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white signup-table rounded-lg overflow-hidden">
+                            <thead class="bg-purple-600 text-white hidden sm:table-header-group">
+                                <tr>
+                                    <th class="p-3 text-left">Name</th>
+                                    <th class="p-3 text-left">Email</th>
+                                </tr>
+                            </thead>
+                            <tbody id="signupsTableBody" class="divide-y divide-gray-200">
+                                <!-- Signup data will be inserted here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -77,8 +131,12 @@
             const userIdValue = document.getElementById('userIdValue');
             const messageDisplay = document.getElementById('messageDisplay');
             const messageText = document.getElementById('messageText');
+            const signupsContainer = document.getElementById('signupsContainer');
+            const signupsTableBody = document.getElementById('signupsTableBody');
+            const dashboardLoading = document.getElementById('dashboardLoading');
 
             let userId = null;
+            let unsubscribeFromSignups = null;
 
             // Function to show a message to the user
             function showMessage(text, isSuccess = false) {
@@ -105,6 +163,49 @@
                 }
             }
 
+            // Function to listen for real-time signups
+            function listenForSignups() {
+                if (!userId) {
+                    console.error("User ID is not available for fetching data.");
+                    return;
+                }
+                
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
+                
+                // Unsubscribe from previous listener if it exists
+                if (unsubscribeFromSignups) {
+                    unsubscribeFromSignups();
+                }
+
+                unsubscribeFromSignups = db.collection(collectionPath).onSnapshot(snapshot => {
+                    dashboardLoading.classList.add('hidden');
+                    signupsContainer.classList.remove('hidden');
+                    signupsTableBody.innerHTML = '';
+                    
+                    if (snapshot.empty) {
+                        signupsTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-gray-500">No signups yet.</td></tr>`;
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const row = document.createElement('tr');
+                        row.classList.add('bg-gray-50', 'hover:bg-gray-100');
+                        row.innerHTML = `
+                            <td class="p-3 text-sm text-gray-700 sm:table-cell" data-label="Name">${data.name}</td>
+                            <td class="p-3 text-sm text-gray-700 sm:table-cell" data-label="Email">${data.email}</td>
+                        `;
+                        signupsTableBody.appendChild(row);
+                    });
+                }, error => {
+                    console.error("Error fetching signups:", error);
+                    dashboardLoading.classList.add('hidden');
+                    signupsContainer.classList.remove('hidden');
+                    signupsTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-red-500">Error loading signups.</td></tr>`;
+                });
+            }
+
 
             // Authentication logic
             try {
@@ -126,6 +227,7 @@
                     userIdValue.textContent = userId;
                     userIdDisplay.classList.remove('hidden');
                     submitButton.disabled = false;
+                    listenForSignups(); // Start listening for data once authenticated
                 } else {
                     userId = null;
                     submitButton.disabled = true;
