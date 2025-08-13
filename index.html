@@ -117,7 +117,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
-        // Use an IIFE to keep the script self-contained
         (async function() {
             
             // -----------------------------------------------------------
@@ -149,7 +148,6 @@
             let app, auth, db;
             let userId = null;
 
-            // Function to show a message to the user
             function showMessage(text, isSuccess = false) {
                 if (!text) {
                     messageDisplay.classList.add('hidden');
@@ -174,7 +172,6 @@
                 }
             }
             
-            // Function to set up a real-time listener for signups
             function setupSignupListener() {
                 if (!userId) {
                     console.error("User ID is not available for setting up listener.");
@@ -215,7 +212,6 @@
                 });
             }
 
-            // Initialization and authentication logic
             async function initializeAppAndAuth() {
                 try {
                     // Check if a valid API key exists
@@ -229,29 +225,26 @@
                     
                     await signInAnonymously(auth);
                 } catch (error) {
-                    // Handle specific errors and show a user-friendly message
-                    console.error("Initialization or Authentication Error:", error);
-                    let errorMessage = "An unknown error occurred. Please check your browser's console for details.";
-                    if (error.code && error.code === 'auth/api-key-not-valid') {
-                        errorMessage = "Error: Your Firebase API key is not valid. Please ensure the 'apiKey' in your code is correct and copied exactly from your Firebase project settings.";
-                    } else if (error.message.includes('placeholder')) {
-                        errorMessage = error.message;
+                    console.error("Full Initialization/Authentication Error:", error);
+                    let errorMessage = "An unknown error occurred.";
+                    if (error.code) {
+                        errorMessage = `Firebase Error: ${error.code.replace(/-/g, ' ')}.`;
+                    } else if (error.message) {
+                        errorMessage = `An initialization error occurred: ${error.message}`;
                     }
                     showMessage(errorMessage);
-                    // Hide loading spinner and disable button on failure
                     dashboardLoading.classList.add('hidden');
                     submitButton.disabled = true;
                     return;
                 }
 
-                // Wait for auth state change to get the user ID and set up listener
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
                         userIdValue.textContent = userId;
                         userIdDisplay.classList.remove('hidden');
                         submitButton.disabled = false;
-                        setupSignupListener(); // Set up real-time listener
+                        setupSignupListener();
                     } else {
                         userId = null;
                         submitButton.disabled = true;
@@ -259,14 +252,12 @@
                 });
             }
 
-            // Start the initialization process
             initializeAppAndAuth();
 
-            // Form submission handler
             signupForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 setLoading(true);
-                showMessage(''); // Clear previous messages
+                showMessage('');
                 
                 const name = nameInput.value;
                 const email = emailInput.value;
@@ -298,8 +289,6 @@
                 }
             });
             
-            // The refresh button is now redundant because of the real-time listener,
-            // but we can keep it as a fallback.
             refreshButton.addEventListener('click', setupSignupListener);
         })();
     </script>
