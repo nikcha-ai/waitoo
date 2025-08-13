@@ -13,10 +13,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <!-- Babel for JSX transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Firebase CDN scripts for authentication and firestore -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
     <style>
         .font-poppins { font-family: 'Poppins', sans-serif; }
         .font-playfair { font-family: 'Playfair Display', serif; }
@@ -33,16 +30,22 @@
 
     <div id="root"></div>
 
-    <script type="text/babel">
+    <!-- The script below uses type="text/babel" to compile JSX -->
+    <script type="text/babel" data-type="module">
+        // The CDN scripts below use the modern modular import syntax.
+        // They are loaded dynamically to avoid import-related issues.
+        
+        // This is a more robust way to load and use Firebase libraries
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         const { useState, useEffect } = React;
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 
-        // Correct way to access Firebase services from CDN
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = app.auth();
-        const db = app.firestore();
-        
         const App = () => {
+            const [db, setDb] = useState(null);
+            const [auth, setAuth] = useState(null);
             const [userId, setUserId] = useState(null);
             const [isAuthReady, setIsAuthReady] = useState(false);
             const [name, setName] = useState('');
@@ -50,23 +53,32 @@
             const [loading, setLoading] = useState(false);
             const [message, setMessage] = useState('');
 
-            // Firebase Authentication
+            // Firebase Initialization and Authentication
             useEffect(() => {
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                const authenticate = async () => {
+                const initializeFirebase = async () => {
                     try {
+                        const app = initializeApp(firebaseConfig);
+                        const firestoreDb = getFirestore(app);
+                        const firebaseAuth = getAuth(app);
+                        
+                        setDb(firestoreDb);
+                        setAuth(firebaseAuth);
+
+                        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                         if (initialAuthToken) {
-                            await auth.signInWithCustomToken(initialAuthToken);
+                            await signInWithCustomToken(firebaseAuth, initialAuthToken);
                         } else {
-                            await auth.signInAnonymously();
+                            await signInAnonymously(firebaseAuth);
                         }
                     } catch (error) {
-                        console.error("Authentication Error:", error);
+                        console.error("Error initializing Firebase:", error);
+                        setMessage("Failed to initialize Firebase. Please check your console for details.");
                     }
                 };
-                authenticate();
-                
-                const unsubscribe = auth.onAuthStateChanged((user) => {
+
+                initializeFirebase();
+
+                const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
                     if (user) {
                         setUserId(user.uid);
                     } else {
@@ -99,10 +111,10 @@
                     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                     const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
                     
-                    await db.collection(collectionPath).add({
+                    await addDoc(collection(db, collectionPath), {
                         name,
                         email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        createdAt: serverTimestamp()
                     });
         
                     setMessage('Signup successful! Thank you.');
