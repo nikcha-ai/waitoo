@@ -42,6 +42,10 @@
                 white-space: nowrap;
                 font-weight: 600;
             }
+            .signup-table td.actions {
+                text-align: center;
+                padding-left: 10px;
+            }
         }
     </style>
 </head>
@@ -100,6 +104,7 @@
                                 <tr>
                                     <th class="p-3 text-left">Name</th>
                                     <th class="p-3 text-left">Email</th>
+                                    <th class="p-3 text-left">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="signupsTableBody" class="divide-y divide-gray-200">
@@ -115,22 +120,26 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
         (async function() {
             
             // -----------------------------------------------------------
             // YOUR FIREBASE CONFIG GOES HERE
-            // REPLACE THIS ENTIRE OBJECT with the one you copied from the Firebase console.
+            //
+            // IMPORTANT: You MUST replace this entire object with your
+            // own firebaseConfig object from the Firebase console.
+            // If you don't, the app will not work.
             // -----------------------------------------------------------
             const firebaseConfig = {
-                apiKey: "AIzaSyAOes_4WYEDI53O_zPngKwycHU0hq1mPC0",
+                apiKey: "AIzaSyOAEs_4WYEDi530_zPngKWycHU0hq1mPCB",
                 authDomain: "waitoo-8b3e6.firebaseapp.com",
                 projectId: "waitoo-8b3e6",
-                storageBucket: "waitoo-8b3e6.firebasestorage.app",
-                  messagingSenderId: "570627927950",
-                  appId: "1:570627927950:web:932ae992c302d758b6fedf"  
-                };
+                storageBucket: "waitoo-8b3e6.appspot.com",
+                messagingSenderId: "570627927950",
+                appId: "1:570627927950:web:932ae992c382d75886fedf"
+            };
+
             const signupForm = document.getElementById('signupForm');
             const submitButton = document.getElementById('submitButton');
             const nameInput = document.getElementById('name');
@@ -180,7 +189,7 @@
                 dashboardLoading.classList.remove('hidden');
                 signupsContainer.classList.add('hidden');
 
-                const appId = firebaseConfig.appId;
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                 const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
                 
                 const q = collection(db, collectionPath);
@@ -188,15 +197,19 @@
                     signupsTableBody.innerHTML = '';
                     
                     if (querySnapshot.empty) {
-                        signupsTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-gray-500">No signups yet.</td></tr>`;
+                        signupsTableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">No signups yet.</td></tr>`;
                     } else {
                         querySnapshot.forEach(doc => {
                             const data = doc.data();
+                            const docId = doc.id;
                             const row = document.createElement('tr');
                             row.classList.add('bg-gray-50', 'hover:bg-gray-100');
                             row.innerHTML = `
                                 <td class="p-3 text-sm text-gray-700 sm:table-cell" data-label="Name">${data.name}</td>
                                 <td class="p-3 text-sm text-gray-700 sm:table-cell" data-label="Email">${data.email}</td>
+                                <td class="p-3 text-sm text-gray-700 sm:table-cell actions" data-label="Actions">
+                                    <button class="delete-btn bg-red-500 text-white text-sm px-3 py-1 rounded-full hover:bg-red-600 transition-colors duration-300" data-id="${docId}">Delete</button>
+                                </td>
                             `;
                             signupsTableBody.appendChild(row);
                         });
@@ -205,24 +218,45 @@
                     signupsContainer.classList.remove('hidden');
                 }, (error) => {
                     console.error("Error fetching signups:", error);
-                    signupsTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-red-500">Error loading signups.</td></tr>`;
+                    signupsTableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-500">Error loading signups.</td></tr>`;
                     dashboardLoading.classList.add('hidden');
                     signupsContainer.classList.remove('hidden');
                 });
             }
+            
+            // Function to delete a document from Firestore
+            async function deleteSignup(docId) {
+                if (!userId) {
+                    showMessage('Authentication not ready. Please try again.');
+                    return;
+                }
+                
+                // Use a custom modal instead of alert/confirm
+                // For this example, we'll proceed directly but a custom UI would be better
+                
+                try {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
+                    await deleteDoc(doc(db, collectionPath, docId));
+                    showMessage('Signup deleted successfully!', true);
+                } catch (error) {
+                    console.error("Error deleting document:", error);
+                    showMessage('An error occurred while deleting.');
+                }
+            }
 
             async function initializeAppAndAuth() {
                 try {
-                    // Check if a valid API key exists
-                    if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('AIzaSy') === false) {
-                        throw new Error('Please replace the placeholder Firebase config with your actual config from the Firebase console.');
-                    }
-                    
                     app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
-                    
-                    await signInAnonymously(auth);
+
+                    // Sign in with the provided token or anonymously
+                    if (typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 } catch (error) {
                     console.error("Full Initialization/Authentication Error:", error);
                     let errorMessage = "An unknown error occurred.";
@@ -268,7 +302,7 @@
                 }
 
                 try {
-                    const appId = firebaseConfig.appId;
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                     const collectionPath = `/artifacts/${appId}/users/${userId}/signups`;
                     
                     await addDoc(collection(db, collectionPath), {
@@ -285,6 +319,14 @@
                     showMessage('An error occurred. Please try again.');
                 } finally {
                     setLoading(false);
+                }
+            });
+
+            // Use event delegation to handle clicks on dynamically created delete buttons
+            signupsTableBody.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-btn')) {
+                    const docId = e.target.dataset.id;
+                    deleteSignup(docId);
                 }
             });
             
