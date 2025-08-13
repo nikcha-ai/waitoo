@@ -118,9 +118,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         async function createCustomConfirm(message) {
             return new Promise((resolve) => {
@@ -157,6 +157,7 @@
             
             // -------------------------------------------------------------------------------------------------------
             // !!! THIS IS THE EXACT FIREBASE CONFIGURATION COPIED FROM YOUR SCREENSHOT !!!
+            // Please ensure this is correct if the error persists.
             // -------------------------------------------------------------------------------------------------------
             const firebaseConfig = {
                 apiKey: "AIzaSyOAEs_4WYEDi530_zPngKWycHU0hq1mPC0",
@@ -274,17 +275,20 @@
             }
 
             async function initializeAppAndAuth() {
+                console.log("Attempting to initialize Firebase...");
                 try {
                     app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
-
-                    // We will just sign in anonymously for this app
+                    console.log("Firebase initialized successfully. Attempting anonymous sign-in...");
                     await signInAnonymously(auth);
+                    console.log("Anonymous sign-in successful.");
                 } catch (error) {
                     console.error("Full Initialization/Authentication Error:", error);
                     let errorMessage = "An unknown error occurred.";
-                    if (error.code) {
+                    if (error.code === 'auth/api-key-not-valid' || error.code === 'auth/invalid-api-key') {
+                        errorMessage = "Error: The Firebase API key is not valid for this project. This is a project configuration issue, not a code bug. Please check your Firebase Console under Project Settings -> General, and ensure the API key matches exactly.";
+                    } else if (error.code) {
                         errorMessage = `Firebase Error: ${error.code.replace(/-/g, ' ')}.`;
                     } else if (error.message) {
                         errorMessage = `An initialization error occurred: ${error.message}`;
